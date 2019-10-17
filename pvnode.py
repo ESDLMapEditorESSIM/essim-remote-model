@@ -2,24 +2,37 @@
 
 import paho.mqtt.client as mqtt
 import struct
+import random
+import math
 
-# The callback for when the client receives a CONNACK response from the server.
+essimTopic = "essim"
+nodeId = "PVParc_253c"
+mwp = 10
+
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
-    topic = "TESTTOPIC/node/#"
+    topic = "{}/node/{}/#".format(essimTopic, nodeId)
     print("Subscribed to {}".format(topic))
     client.subscribe(topic,2)
     
-# The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
-    print(msg.topic)
-    print(len(msg.payload))
-
+    #print(msg.topic)
+    #print(len(msg.payload))
     try:
-        [simId, timestep, duration, minprice, maxprice] = struct.unpack(">qqqdd",msg.payload)
-        print("Received message from client " + str(simId))
-        response = struct.pack(">qdddd", timestep, minprice, -1337, maxprice, -1337)
-        client.publish("TESTTOPIC/simulation/bid", response);
+        if (str(msg.topic).endswith("/config")):
+            print(msg.payload)
+        elif (str(msg.topic).endswith("/createBid")):
+            [timestep, duration, minprice, maxprice] = struct.unpack(">qqdd",msg.payload)
+            #print("Received message from client: ")
+            #print("\tTimestep: {}".format(timestep))
+            #print("\tDuration: {}".format(duration))
+            #print("\tminprice: {}".format(minprice))
+            #print("\tmaxprice: {}".format(maxprice))
+            time_of_day = timestep % 86400;
+            e = min(0, mwp * 1000000 * duration * (0.8 + 0.4 * random.random()) * math.pow(math.cos(time_of_day / (86400 / (2 * math.pi))),3))
+
+            response = struct.pack(">qdddd", timestep, minprice, e, maxprice, e)
+            client.publish("{}/simulation/{}/bid".format(essimTopic, nodeId), response);
     except Exception as e:
         print(e)
 
@@ -29,4 +42,8 @@ client.on_message = on_message
 
 client.connect("localhost")
 
-client.loop_forever()
+try:
+    client.loop_forever()
+except KeyboardInterrupt:
+    client.disconnect()
+    print("")
