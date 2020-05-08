@@ -9,32 +9,36 @@ essimTopic = "essim"
 nodeId = "PVParc_253c"
 mwp = 10
 
+
 def on_connect(client, userdata, flags, rc):
-    print("Connected with result code "+str(rc))
+    print("Connected with result code " + str(rc))
     topic = "{}/node/{}/#".format(essimTopic, nodeId)
     print("Subscribed to {}".format(topic))
-    client.subscribe(topic,2)
-    
+    client.subscribe(topic, 2)
+
+
 def on_message(client, userdata, msg):
-    #print(msg.topic)
-    #print(len(msg.payload))
+    # print(msg.topic)
+    # print(len(msg.payload))
     try:
-        if (str(msg.topic).endswith("/config")):
+        if str(msg.topic).endswith("/config"):
             print(msg.payload)
-        elif (str(msg.topic).endswith("/createBid")):
-            [timestep, duration, minprice, maxprice] = struct.unpack(">qqdd",msg.payload)
-            #print("Received message from client: ")
-            #print("\tTimestep: {}".format(timestep))
-            #print("\tDuration: {}".format(duration))
-            #print("\tminprice: {}".format(minprice))
-            #print("\tmaxprice: {}".format(maxprice))
-            time_of_day = timestep % 86400;
-            e = min(0, mwp * 1000000 * duration * (0.8 + 0.4 * random.random()) * math.pow(math.cos(time_of_day / (86400 / (2 * math.pi))),3))
+        elif str(msg.topic).endswith("/createBid"):
+            [timestep, duration, minprice, maxprice] = struct.unpack(">qqdd", msg.payload)
+            # print("Received message from client: ")
+            # print("\tTimestep: {}".format(timestep))
+            # print("\tDuration: {}".format(duration))
+            # print("\tminprice: {}".format(minprice))
+            # print("\tmaxprice: {}".format(maxprice))
+            time_of_day = timestep % 86400
+            e = min(0, mwp * 1000000 * duration * (0.8 + 0.4 * random.random()) * math.pow(
+                math.cos(time_of_day / (86400 / (2 * math.pi))), 3))
 
             response = struct.pack(">qdddd", timestep, minprice, e, maxprice, e)
-            client.publish("{}/simulation/{}/bid".format(essimTopic, nodeId), response);
+            client.publish("{}/simulation/{}/bid".format(essimTopic, nodeId), response)
     except Exception as e:
         print(e)
+
 
 client = mqtt.Client()
 client.on_connect = on_connect
