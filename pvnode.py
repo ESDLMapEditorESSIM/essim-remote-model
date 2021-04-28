@@ -6,7 +6,7 @@ import random
 import math
 
 essimTopic = "essim"
-nodeId = "PVParc_253c"
+nodeId = "PVInstallation_3559"
 mwp = 10
 
 
@@ -22,8 +22,10 @@ def on_message(client, userdata, msg):
     # print(len(msg.payload))
     try:
         if str(msg.topic).endswith("/config"):
+            print('Received config message!')
             print(msg.payload)
         elif str(msg.topic).endswith("/createBid"):
+            print('Received createBid message!')
             [timestep, duration, minprice, maxprice] = struct.unpack(">qqdd", msg.payload)
             # print("Received message from client: ")
             # print("\tTimestep: {}".format(timestep))
@@ -36,6 +38,9 @@ def on_message(client, userdata, msg):
 
             response = struct.pack(">qdddd", timestep, minprice, e, maxprice, e)
             client.publish("{}/simulation/{}/bid".format(essimTopic, nodeId), response)
+        elif str(msg.topic).endswith("/allocate"):
+            [timestep, price] = struct.unpack(">qd", msg.payload)
+            print('Received price for timestep {}:{}'.format(timestep, price))
     except Exception as e:
         print(e)
 

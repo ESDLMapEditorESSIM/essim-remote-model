@@ -1,39 +1,69 @@
-version: '3.2'  # requires Docker Compose 1.13 or later
+version: '3.2'
 
-# This section describes the various containers (services).
 services:
-  rabbitmq:
-    # There is a prebuilt RabbitMQ image; see
-    # https://hub.docker.com/_/rabbitmq/ for details.
-    # This variant is built on Alpine Linux (it's smaller) and includes
-    # the management UI.
-    image: 'rabbitmq:management-alpine'
-
-    # These ports are exposed on the host; 'hostport:containerport'.
-    # You could connect to this server from outside with the *host's*
-    # DNS name or IP address and port 5672 (the left-hand side of the
-    # colon).
+  essim:
+    image: ci.tno.nl/essim/open-sourced-essim/essim-engine:latest
     ports:
-      # The standard AMQP protocol port
-      - '5672:5672'
-      # HTTP management UI
-      - '15672:15672'
-    volumes:
-      - mqtt_conf:/etc/rabbitmq/
-      - mqtt_data:/var/lib/rabbitmq/
-    # Run this container on a private network for this application.
-    # This is necessary for magic Docker DNS to work: other containers
-    # also running on this network will see a host name "rabbitmq"
-    # (the name of this section) and the internal port 5672, even though
-    # that's not explicitly published above.
+     - 8112:8112
+    environment:
+     - HTTP_SERVER_SCHEME=http
+     - HTTP_SERVER_HOSTNAME=0.0.0.0
+     - HTTP_SERVER_PORT=8112
+     - HTTP_SERVER_PATH=essim
+     - MONGODB_HOST=mongo
+     - MONGODB_PORT=27017
+     - GRAFANA_ADMIN_USER=admin
+     - GRAFANA_ADMIN_PASSWORD=e$$im4life
+     - GRAFANA_INTERNAL_URL=http://grafana:3000
+     - GRAFANA_EXTERNAL_URL=http://localhost:3000
+    depends_on:
+     - mongo  
     networks:
-      - network
+     - essim_net
+
+  mqtt:
+    image: eclipse-mosquitto:1.6
+    ports:
+     - 0.0.0.0:1883:1883/tcp
+    networks:
+     - essim_net        
+
+  mongo:
+    image: mvertes/alpine-mongo
+    ports:
+      - 0.0.0.0:27017:27017
+    volumes:
+      - mongo-storage:/data/db
+    networks:
+     - essim_net
+
+  influxdb:
+    image: influxdb:1.7
+    ports:
+      - 8086:8086
+      - 8998:8088
+    volumes:
+      - influxdb-storage:/var/lib/influxdb
+    networks:
+     - essim_net
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - 3000:3000
+    environment:
+      - GF_PANELS_DISABLE_SANITIZE_HTML=true
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=e$$$$im4life
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    networks:
+     - essim_net
 
 volumes:
-  mqtt_conf:
-  mqtt_data:
+  grafana-storage:
+  influxdb-storage:
+  mongo-storage:
 
 networks:
-  # Declare our private network.  We must declare one for the magic
-  # Docker DNS to work, but otherwise its default settings are fine.
-  network:
+  essim_net:
