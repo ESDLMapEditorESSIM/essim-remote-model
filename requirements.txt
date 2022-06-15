@@ -1,1 +1,2 @@
-paho-mqtt
+paho-mqtt==1.6.1
+log4p~=2019.7.13.3

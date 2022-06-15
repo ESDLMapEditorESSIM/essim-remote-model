@@ -6,18 +6,26 @@ services:
     ports:
      - 8112:8112
     environment:
-     - HTTP_SERVER_SCHEME=http
-     - HTTP_SERVER_HOSTNAME=0.0.0.0
-     - HTTP_SERVER_PORT=8112
+     - EMISSION_MANAGER_ENABLE=false
+     - GRAFANA_ADMIN_PASSWORD=e$$im4life
+     - GRAFANA_ADMIN_USER=admin
+     - GRAFANA_EXTERNAL_URL=http://localhost:3000
+     - GRAFANA_INTERNAL_URL=http://grafana:3000
+     - HTTP_SERVER_HOSTNAME=localhost
      - HTTP_SERVER_PATH=essim
+     - HTTP_SERVER_PORT=8081
+     - HTTP_SERVER_SCHEME=http
      - MONGODB_HOST=mongo
      - MONGODB_PORT=27017
-     - GRAFANA_ADMIN_USER=admin
-     - GRAFANA_ADMIN_PASSWORD=e$$im4life
-     - GRAFANA_INTERNAL_URL=http://grafana:3000
-     - GRAFANA_EXTERNAL_URL=http://localhost:3000
+     - PROFILE_QUERY_TIMEOUT=120
+     - CONSOLE_LOG_LEVEL=debug
+     - FILE_LOG_LEVEL=debug
+     - LOG_FILE_LOCATION=logs
+     - LOG_FILES_SIZE_CAP=2GB
+     - MAX_LOG_FILE_SIZE=10MB
+     - MAX_LOG_HISTORY_DAYS=60
     depends_on:
-     - mongo  
+     - mongo
     networks:
      - essim_net
 
